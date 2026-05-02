@@ -1,0 +1,245 @@
+﻿@model SocialMedia.ViewModels.GroupChatViewModel
+@{
+    ViewData["Title"] = Model.Group.Name;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card shadow-sm" style="height:85vh;display:flex;flex-direction:column;">
+
+            <!-- Header -->
+            <div class="card-header bg-success text-white d-flex align-items-center gap-3">
+                <a asp-action="Index" class="text-white text-decoration-none">
+                    <i class="bi bi-arrow-left fs-5"></i>
+                </a>
+
+                @if (!string.IsNullOrEmpty(Model.Group.GroupPicture))
+                {
+                    <img src="@Model.Group.GroupPicture"
+                         class="rounded-circle"
+                         style="width:40px;height:40px;object-fit:cover;" />
+                }
+                else
+                {
+                    <div class="rounded-circle bg-white text-success d-flex
+                        align-items-center justify-content-center"
+                         style="width:40px;height:40px;font-size:1.2rem;">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                }
+
+                <div class="flex-grow-1">
+                    <div class="fw-bold">@Model.Group.Name</div>
+                    <small class="opacity-75">
+                        @Model.Group.Members.Count members
+                    </small>
+                </div>
+
+                <a asp-action="Details" asp-route-id="@Model.Group.Id"
+                       class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-info-circle"></i>
+                </a>
+            </div>
+
+            <!-- Messages -->
+            <div class="card-body overflow-auto p-3 flex-grow-1" id="groupMessagesArea">
+                @foreach (var msg in Model.Messages)
+                {
+                    var isMine = msg.SenderId == Model.CurrentUserId;
+                    <div class="d-flex mb-3
+                        @(isMine ? "justify-content-end" : "justify-content-start")">
+                        @if (!isMine)
+                        {
+                            <!-- Sender Avatar -->
+                            <div class="me-2">
+                                @if (!string.IsNullOrEmpty(msg.Sender.ProfilePicture))
+                                {
+                                    <img src="@msg.Sender.ProfilePicture"
+                                         class="rounded-circle"
+                                         style="width:32px;height:32px;object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle bg-secondary text-white
+                                        d-flex align-items-center justify-content-center"
+                                         style="width:32px;height:32px;font-size:0.9rem;">
+                                        @msg.Sender.FullName[0]
+                                    </div>
+                                }
+                            </div>
+                        }
+                        <div>
+                            @if (!isMine)
+                            {
+                                <div class="text-muted small mb-1 fw-semibold">
+                                    @msg.Sender.FullName
+                                </div>
+                            }
+                            <div class="@(isMine ? "bg-success text-white" : "bg-light text-dark")
+                                rounded-3 px-3 py-2"
+                                 style="max-width:70%;">
+                                <div>@msg.Content</div>
+                                <div class="mt-1 text-end">
+                                    <small class="opacity-75" style="font-size:0.7rem;">
+                                        @msg.SentAt.ToString("hh:mm tt")
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Typing Indicator -->
+                <div id="groupTypingIndicator" class="d-none mb-2">
+                    <small class="text-muted fst-italic" id="typingText"></small>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <div class="card-footer p-2">
+                <div class="input-group">
+                    <input type="text" id="groupMessageInput"
+                           class="form-control"
+                           placeholder="Type a message..."
+                           autocomplete="off" />
+                    <button class="btn btn-success" id="groupSendBtn">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const currentUserId   = "@Model.CurrentUserId";
+        const groupId         = @Model.Group.Id;
+
+        const messagesArea    = document.getElementById("groupMessagesArea");
+        const messageInput    = document.getElementById("groupMessageInput");
+        const sendBtn         = document.getElementById("groupSendBtn");
+        const typingIndicator = document.getElementById("groupTypingIndicator");
+        const typingText      = document.getElementById("typingText");
+
+        // ─── SignalR Connection ──────────────────────────────────────
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/groupChatHub")
+            .withAutomaticReconnect()
+            .build();
+
+        // ─── Receive Message ─────────────────────────────────────────
+        connection.on("ReceiveGroupMessage", (msg) => {
+            appendGroupMessage(msg);
+            scrollToBottom();
+        });
+
+        // ─── Typing ──────────────────────────────────────────────────
+        let typingUsers = {};
+        connection.on("GroupUserTyping", (userId, name) => {
+            typingUsers[userId] = name;
+            updateTypingText();
+        });
+
+        connection.on("GroupUserStopTyping", (userId) => {
+            delete typingUsers[userId];
+            updateTypingText();
+        });
+
+        function updateTypingText() {
+            const names = Object.values(typingUsers);
+            if (names.length === 0) {
+                typingIndicator.classList.add("d-none");
+            } else {
+                typingIndicator.classList.remove("d-none");
+                typingText.textContent = names.length === 1
+                    ? `${names[0]} is typing...`
+                    : `${names.join(", ")} are typing...`;
+                scrollToBottom();
+            }
+        }
+
+        // ─── Start ───────────────────────────────────────────────────
+        connection.start().then(() => {
+            connection.invoke("JoinGroup", groupId.toString());
+        });
+
+        // ─── Send ────────────────────────────────────────────────────
+        let typingTimer;
+        function sendMessage() {
+            const content = messageInput.value.trim();
+            if (!content) return;
+            connection.invoke("SendGroupMessage", groupId, content);
+            messageInput.value = "";
+            connection.invoke("GroupStopTyping", groupId);
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        messageInput.addEventListener("input", () => {
+            connection.invoke("GroupTyping", groupId);
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                connection.invoke("GroupStopTyping", groupId);
+            }, 1500);
+        });
+
+        // ─── Append Message ──────────────────────────────────────────
+        function appendGroupMessage(msg) {
+            const isMine = msg.senderId === currentUserId;
+            const div = document.createElement("div");
+            div.className = `d-flex mb-3 ${isMine ? "justify-content-end" : "justify-content-start"}`;
+
+            const avatarHtml = isMine ? "" : `
+                <div class="me-2">
+                    ${msg.senderAvatar
+                        ? `<img src="${msg.senderAvatar}" class="rounded-circle"
+                                style="width:32px;height:32px;object-fit:cover;" />`
+                        : `<div class="rounded-circle bg-secondary text-white d-flex
+                                    align-items-center justify-content-center"
+                                style="width:32px;height:32px;font-size:0.9rem;">
+                                ${msg.senderName[0]}
+                            </div>`}
+                </div>`;
+
+            const senderLabel = isMine
+                ? ""
+                : `<div class="text-muted small mb-1 fw-semibold">${msg.senderName}</div>`;
+
+            div.innerHTML = `
+                ${avatarHtml}
+                <div>
+                    ${senderLabel}
+                    <div class="${isMine ? "bg-success text-white" : "bg-light text-dark"}
+                                rounded-3 px-3 py-2" style="max-width:70%;">
+                        <div>${escapeHtml(msg.content)}</div>
+                        <div class="mt-1 text-end">
+                            <small class="opacity-75" style="font-size:0.7rem;">
+                                ${msg.sentAt}
+                            </small>
+                        </div>
+                    </div>
+                </div>`;
+
+            messagesArea.insertBefore(div, typingIndicator);
+        }
+
+        function escapeHtml(text) {
+            const d = document.createElement("div");
+            d.appendChild(document.createTextNode(text));
+            return d.innerHTML;
+        }
+
+        function scrollToBottom() {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        scrollToBottom();
+    </script>
+}

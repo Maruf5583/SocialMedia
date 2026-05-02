@@ -1,0 +1,236 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+/* ── Scrollbar ───────────────────────── */
+#messagesArea::-webkit-scrollbar {
+    width: 5px;
+}
+
+#messagesArea::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 10px;
+}
+
+/* ── Navbar active link ──────────────── */
+.navbar .nav-link:hover {
+    opacity: 0.85;
+}
+
+/* ── Card hover effect ───────────────── */
+.card {
+    transition: box-shadow 0.2s;
+}
+
+    .card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    }
+
+/* ── User avatar fallback ────────────── */
+.avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    background-color: #0d6efd;
+    border-radius: 50%;
+}
+
+/* ══════════════════════════════════════
+   GLOBAL
+══════════════════════════════════════ */
+body {
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* ══════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════ */
+.navbar-brand {
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+}
+
+.navbar .nav-link {
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+    .navbar .nav-link:hover {
+        opacity: 0.8;
+    }
+
+    .navbar .nav-link.active {
+        border-bottom: 2px solid white;
+        padding-bottom: 2px;
+    }
+
+/* ══════════════════════════════════════
+   CARDS
+══════════════════════════════════════ */
+.card {
+    border: none;
+    border-radius: 12px;
+    transition: box-shadow 0.25s ease;
+}
+
+    .card:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.10) !important;
+    }
+
+/* ══════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════ */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+}
+
+.btn-success {
+    background-color: #198754;
+}
+
+/* ══════════════════════════════════════
+   CHAT
+══════════════════════════════════════ */
+#messagesArea,
+#groupMessagesArea {
+    scroll-behavior: smooth;
+}
+
+    #messagesArea::-webkit-scrollbar,
+    #groupMessagesArea::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    #messagesArea::-webkit-scrollbar-thumb,
+    #groupMessagesArea::-webkit-scrollbar-thumb {
+        background: #dee2e6;
+        border-radius: 10px;
+    }
+
+/* ══════════════════════════════════════
+   TYPING DOTS ANIMATION
+══════════════════════════════════════ */
+.typing-dots span {
+    animation: blink 1.4s infinite;
+    animation-fill-mode: both;
+}
+
+    .typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+@keyframes blink {
+    0% {
+        opacity: 0.2;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.2;
+    }
+}
+
+/* ══════════════════════════════════════
+   FRIEND REQUEST PAGE
+══════════════════════════════════════ */
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+/* ══════════════════════════════════════
+   PROFILE
+══════════════════════════════════════ */
+.profile-avatar {
+    object-fit: cover;
+    border: 3px solid #dee2e6;
+}
+
+/* ══════════════════════════════════════
+   BADGE
+══════════════════════════════════════ */
+.badge {
+    font-weight: 500;
+    border-radius: 20px;
+}
+
+/* ══════════════════════════════════════
+   ALERT
+══════════════════════════════════════ */
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+/* ══════════════════════════════════════
+   FORMS
+══════════════════════════════════════ */
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+    .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        border-color: #86b7fe;
+    }
+
+/* ══════════════════════════════════════
+   HOVER BG (Group Create friend list)
+══════════════════════════════════════ */
+.hover-bg:hover {
+    background-color: #f0f2f5;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media (max-width: 576px) {
+    .card-body {
+        padding: 1rem !important;
+    }
+
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+}

@@ -1,0 +1,82 @@
+﻿@model List<SocialMedia.ViewModels.ConversationViewModel>
+@{
+    ViewData["Title"] = "Messages";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-chat-dots-fill"></i> Messages
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Any())
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-chat-square-dots" style="font-size:3rem"></i>
+                        <p class="mt-2">
+                            No conversations yet.<br />
+                            Add friends to start chatting!
+                        </p>
+                    </div>
+                }
+                <ul class="list-group list-group-flush">
+                    @foreach (var conv in Model)
+                    {
+                        <li class="list-group-item list-group-item-action px-3 py-3">
+                            <a asp-controller="Chat" asp-action="Open"
+                                   asp-route-userId="@conv.FriendId"
+                                   class="text-decoration-none text-dark">
+                                <div class="d-flex align-items-center gap-3">
+
+                                    <!-- Avatar -->
+                                    @if (!string.IsNullOrEmpty(conv.FriendAvatar))
+                                    {
+                                        <img src="@conv.FriendAvatar"
+                                             class="rounded-circle"
+                                             style="width:52px;height:52px;object-fit:cover;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-primary text-white
+                                            d-flex align-items-center justify-content-center"
+                                             style="width:52px;height:52px;font-size:1.3rem;">
+                                            @conv.FriendName[0]
+                                        </div>
+                                    }
+
+                                    <!-- Info -->
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">@conv.FriendName</span>
+                                            @if (conv.LastMessageTime.HasValue)
+                                            {
+                                                <small class="text-muted">
+                                                    @conv.LastMessageTime.Value.ToString("hh:mm tt")
+                                                </small>
+                                            }
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted text-truncate">
+                                                @(conv.LastMessage ?? "Say hello! 👋")
+                                            </small>
+                                            @if (conv.UnreadCount > 0)
+                                            {
+                                                <span class="badge bg-danger rounded-pill ms-2">
+                                                    @conv.UnreadCount
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

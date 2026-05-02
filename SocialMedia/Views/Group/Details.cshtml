@@ -1,0 +1,164 @@
+﻿@model SocialMedia.ViewModels.GroupDetailsViewModel
+@{
+    ViewData["Title"] = "Group Details";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+
+        <!-- Group Info Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-4 text-center">
+                @if (!string.IsNullOrEmpty(Model.Group.GroupPicture))
+                {
+                    <img src="@Model.Group.GroupPicture"
+                         class="rounded-circle mb-3"
+                         style="width:90px;height:90px;object-fit:cover;" />
+                }
+                else
+                {
+                    <div class="rounded-circle bg-success text-white d-flex
+                        align-items-center justify-content-center mx-auto mb-3"
+                         style="width:90px;height:90px;font-size:2.2rem;">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                }
+
+                <h4 class="fw-bold">@Model.Group.Name</h4>
+                <p class="text-muted">
+                    @(Model.Group.Description ?? "No description.")
+                </p>
+                <span class="badge bg-secondary">
+                    <i class="bi bi-people"></i>
+                    @Model.Group.Members.Count members
+                </span>
+
+                <div class="d-flex gap-2 justify-content-center mt-3">
+                    <a asp-action="Chat" asp-route-id="@Model.Group.Id"
+                           class="btn btn-success">
+                        <i class="bi bi-chat-fill"></i> Open Chat
+                    </a>
+
+                    @if (Model.Group.CreatedById != Model.CurrentUserId)
+                    {
+                        <form asp-action="Leave" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="groupId" value="@Model.Group.Id" />
+                            <button class="btn btn-outline-danger"
+                                    onclick="return confirm('Leave this group?')">
+                                <i class="bi bi-box-arrow-left"></i> Leave
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.IsAdmin)
+                    {
+                        <form asp-action="Delete" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="groupId" value="@Model.Group.Id" />
+                            <button class="btn btn-danger"
+                                    onclick="return confirm('Delete this group permanently?')">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Members List -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-bold">
+                <i class="bi bi-people"></i> Members
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var member in Model.Group.Members)
+                {
+                    <li class="list-group-item d-flex align-items-center gap-3 px-3 py-2">
+                        @if (!string.IsNullOrEmpty(member.User.ProfilePicture))
+                        {
+                            <img src="@member.User.ProfilePicture"
+                                 class="rounded-circle"
+                                 style="width:40px;height:40px;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <div class="rounded-circle bg-primary text-white d-flex
+                                align-items-center justify-content-center"
+                                 style="width:40px;height:40px;">
+                                @member.User.FullName[0]
+                            </div>
+                        }
+
+                        <div class="flex-grow-1">
+                            <span class="fw-semibold">@member.User.FullName</span>
+                            @if (member.IsAdmin)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">Admin</span>
+                            }
+                            @if (member.UserId == Model.CurrentUserId)
+                            {
+                                <span class="badge bg-info ms-1">You</span>
+                            }
+                        </div>
+
+                        @if (Model.IsAdmin && member.UserId != Model.CurrentUserId
+                                           && member.UserId != Model.Group.CreatedById)
+                        {
+                            <form asp-action="RemoveMember" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="groupId" value="@Model.Group.Id" />
+                                <input type="hidden" name="memberId" value="@member.UserId" />
+                                <button class="btn btn-outline-danger btn-sm"
+                                        onclick="return confirm('Remove this member?')">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </form>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <!-- Add Member (Admin only) -->
+        @if (Model.IsAdmin && Model.NonMemberFriends.Any())
+        {
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold">
+                    <i class="bi bi-person-plus"></i> Add Friends to Group
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var friend in Model.NonMemberFriends)
+                    {
+                        <li class="list-group-item d-flex align-items-center gap-3 px-3 py-2">
+                            @if (!string.IsNullOrEmpty(friend.ProfilePicture))
+                            {
+                                <img src="@friend.ProfilePicture"
+                                     class="rounded-circle"
+                                     style="width:40px;height:40px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-secondary text-white d-flex
+                                    align-items-center justify-content-center"
+                                     style="width:40px;height:40px;">
+                                    @friend.FullName[0]
+                                </div>
+                            }
+                            <span class="flex-grow-1 fw-semibold">@friend.FullName</span>
+
+                            <form asp-action="AddMember" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="groupId" value="@Model.Group.Id" />
+                                <input type="hidden" name="memberId" value="@friend.Id" />
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="bi bi-plus"></i> Add
+                                </button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>

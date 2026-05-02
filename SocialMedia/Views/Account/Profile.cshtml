@@ -1,0 +1,134 @@
+﻿@model SocialMedia.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+
+                <!-- Profile Header -->
+                <div class="d-flex align-items-center gap-4 mb-4">
+                    @if (!string.IsNullOrEmpty(Model.ProfilePicture))
+                    {
+                        <img src="@Model.ProfilePicture"
+                             class="rounded-circle"
+                             style="width:100px;height:100px;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-primary text-white d-flex
+                            align-items-center justify-content-center"
+                             style="width:100px;height:100px;font-size:2.5rem;">
+                            @Model.FullName[0]
+                        </div>
+                    }
+                    <div>
+                        <h3 class="fw-bold mb-1">@Model.FullName</h3>
+                        <p class="text-muted mb-1">@(Model.Bio ?? "No bio yet")</p>
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-people"></i> @Model.FriendsCount Friends
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                @if (!Model.IsOwnProfile)
+                {
+                    <div class="d-flex gap-2 mb-4">
+                        @if (Model.IsFriend)
+                        {
+                            <a asp-controller="Chat" asp-action="Open"
+                                   asp-route-userId="@Model.Id"
+                                   class="btn btn-success">
+                                <i class="bi bi-chat-fill"></i> Send Message
+                            </a>
+                            <form asp-controller="Friend" asp-action="Unfriend" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="friendId" value="@Model.Id" />
+                                <button class="btn btn-outline-danger">
+                                    <i class="bi bi-person-dash"></i> Unfriend
+                                </button>
+                            </form>
+                        }
+                        else if (Model.HasPendingRequest)
+                        {
+                            <form asp-controller="Friend" asp-action="CancelRequest" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="requestId" value="@Model.FriendRequestId" />
+                                <button class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancel Request
+                                </button>
+                            </form>
+                        }
+                        else if (Model.HasReceivedRequest)
+                        {
+                            <form asp-controller="Friend" asp-action="AcceptRequest" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="requestId" value="@Model.FriendRequestId" />
+                                <button class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Accept Request
+                                </button>
+                            </form>
+                            <form asp-controller="Friend" asp-action="RejectRequest" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="requestId" value="@Model.FriendRequestId" />
+                                <button class="btn btn-outline-danger">
+                                    <i class="bi bi-x"></i> Reject
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-controller="Friend" asp-action="SendRequest" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="receiverId" value="@Model.Id" />
+                                <button class="btn btn-primary">
+                                    <i class="bi bi-person-plus"></i> Add Friend
+                                </button>
+                            </form>
+                        }
+                    </div>
+                }
+
+                <!-- Edit Form (only own profile) -->
+                @if (Model.IsOwnProfile)
+                {
+                    <hr />
+                    <h5 class="fw-bold mb-3">Edit Profile</h5>
+                    <form asp-action="EditProfile" method="post"
+                          enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label fw-semibold"></label>
+                            <input asp-for="FullName" class="form-control" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Bio" class="form-label fw-semibold"></label>
+                            <textarea asp-for="Bio" class="form-control" rows="3"
+                                      placeholder="Tell people about yourself..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="ProfilePictureFile" class="form-label fw-semibold">
+                                Profile Picture
+                            </label>
+                            <input asp-for="ProfilePictureFile" type="file"
+                                   class="form-control" accept="image/*" />
+                            <div class="form-text">Max 5MB. JPG, PNG, GIF, WEBP allowed.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Save Changes
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
