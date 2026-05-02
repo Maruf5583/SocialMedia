@@ -1,4 +1,4 @@
-# SocialConnect - Real-Time Social Media Web Application
+# SocialMedia - Real-Time Social Media Web Application
 
 ## 📌 Project Overview
 
