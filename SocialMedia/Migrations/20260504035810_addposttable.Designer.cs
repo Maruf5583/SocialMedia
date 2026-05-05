@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SocialMedia.Data;
 
@@ -11,9 +12,11 @@ using SocialMedia.Data;
 namespace SocialMedia.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260504035810_addposttable")]
+    partial class addposttable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -231,84 +234,6 @@ namespace SocialMedia.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("SocialMedia.Models.Comment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsEdited")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("ParentCommentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("ParentCommentId");
-
-                    b.HasIndex("PostId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Comments");
-                });
-
-            modelBuilder.Entity("SocialMedia.Models.CommentReaction", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ReactionType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReactionType");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("CommentId", "UserId")
-                        .IsUnique();
-
-                    b.ToTable("CommentReactions");
                 });
 
             modelBuilder.Entity("SocialMedia.Models.FriendRequest", b =>
@@ -596,51 +521,6 @@ namespace SocialMedia.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("SocialMedia.Models.Comment", b =>
-                {
-                    b.HasOne("SocialMedia.Models.Comment", "ParentComment")
-                        .WithMany("Replies")
-                        .HasForeignKey("ParentCommentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("SocialMedia.Models.Post", "Post")
-                        .WithMany("Comments")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SocialMedia.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ParentComment");
-
-                    b.Navigation("Post");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SocialMedia.Models.CommentReaction", b =>
-                {
-                    b.HasOne("SocialMedia.Models.Comment", "Comment")
-                        .WithMany("Reactions")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SocialMedia.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SocialMedia.Models.FriendRequest", b =>
                 {
                     b.HasOne("SocialMedia.Models.ApplicationUser", "Receiver")
@@ -778,13 +658,6 @@ namespace SocialMedia.Migrations
                     b.Navigation("SentRequests");
                 });
 
-            modelBuilder.Entity("SocialMedia.Models.Comment", b =>
-                {
-                    b.Navigation("Reactions");
-
-                    b.Navigation("Replies");
-                });
-
             modelBuilder.Entity("SocialMedia.Models.Group", b =>
                 {
                     b.Navigation("Members");
@@ -794,8 +667,6 @@ namespace SocialMedia.Migrations
 
             modelBuilder.Entity("SocialMedia.Models.Post", b =>
                 {
-                    b.Navigation("Comments");
-
                     b.Navigation("Reactions");
 
                     b.Navigation("Shares");

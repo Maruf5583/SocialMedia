@@ -1,0 +1,135 @@
+﻿@using SocialMedia.Models
+@model IEnumerable<Comment>
+
+@{
+    string TimeAgo(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalMinutes < 1) return "Just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return dt.ToString("MMM dd");
+    }
+    
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted small py-2">
+        <i class="bi bi-chat-dots"></i> No comments yet. Be the first to comment!
+    </div>
+}
+else
+{
+    @foreach (var comment in Model)
+    {
+        <div id="comment-@comment.Id" class="mb-3" data-post-id="@comment.PostId">
+            <div class="d-flex gap-2">
+                <img src="@(comment.User?.ProfilePicture ?? "/images/default-avatar.png")"
+                     class="rounded-circle"
+                     style="width:32px;height:32px;object-fit:cover;"
+                     onerror="this.src='/images/default-avatar.png'" />
+                <div class="flex-grow-1">
+                    <div class="bg-light rounded-3 p-2" style="border-radius:18px!important;">
+                        <div class="fw-semibold small">@(comment.User?.FullName ?? "Unknown")</div>
+                        <div class="comment-text small">@comment.Content</div>
+                    </div>
+                    <div class="mt-1 ms-2">
+                        <span class="comment-time text-muted" style="font-size:0.7rem;">
+                            @TimeAgo(comment.CreatedAt)
+                        </span>
+                        @if (comment.IsEdited)
+                        {
+                            <span class="text-muted" style="font-size:0.7rem;">· <i>edited</i></span>
+                        }
+                        <button class="btn btn-link btn-sm p-0 ms-2"
+                                style="font-size:0.7rem;text-decoration:none;"
+                                onclick="showReplyForm(@comment.Id, '@(comment.User?.FullName)')">
+                            Reply
+                        </button>
+                        @if (comment.UserId == currentUserId)
+                        {
+                            <button class="btn btn-link btn-sm p-0 ms-2"
+                                    style="font-size:0.7rem;text-decoration:none;"
+                                    onclick="editComment(@comment.Id, `@Html.Raw(comment.Content.Replace("`", "\\`"))`)">
+                                Edit
+                            </button>
+                            <button class="btn btn-link btn-sm p-0 ms-2 text-danger"
+                                    style="font-size:0.7rem;text-decoration:none;"
+                                    onclick="deleteComment(@comment.Id)">
+                                Delete
+                            </button>
+                        }
+                    </div>
+                    
+                    <!-- Reply Form -->
+                    <div id="reply-form-@comment.Id" class="d-none mt-2">
+                        <div class="d-flex gap-2">
+                            <div class="flex-grow-1">
+                                <textarea id="reply-text-@comment.Id"
+                                          class="form-control form-control-sm"
+                                          rows="2"
+                                          placeholder="Write a reply..."
+                                          style="border-radius:20px;resize:none;"></textarea>
+                                <div class="mt-1 text-end">
+                                    <button class="btn btn-secondary btn-sm"
+                                            onclick="cancelReply(@comment.Id)">
+                                        Cancel
+                                    </button>
+                                    <button class="btn btn-primary btn-sm"
+                                            onclick="submitReply(@comment.Id, @comment.PostId)">
+                                        Reply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Replies -->
+                    @if (comment.Replies != null && comment.Replies.Any())
+                    {
+                        <div class="replies-container mt-2 ms-4">
+                            @foreach (var reply in comment.Replies.OrderBy(r => r.CreatedAt))
+                            {
+                                <div id="comment-@reply.Id" class="mb-2" data-post-id="@reply.PostId">
+                                    <div class="d-flex gap-2">
+                                        <img src="@(reply.User?.ProfilePicture ?? "/images/default-avatar.png")"
+                                             class="rounded-circle"
+                                             style="width:28px;height:28px;object-fit:cover;"
+                                             onerror="this.src='/images/default-avatar.png'" />
+                                        <div class="flex-grow-1">
+                                            <div class="bg-light rounded-3 p-2" style="border-radius:18px!important;">
+                                                <div class="fw-semibold small">@(reply.User?.FullName ?? "Unknown")</div>
+                                                <div class="comment-text small">@reply.Content</div>
+                                            </div>
+                                            <div class="mt-1 ms-2">
+                                                <span class="comment-time text-muted" style="font-size:0.7rem;">
+                                                    @TimeAgo(reply.CreatedAt)
+                                                </span>
+                                                @if (reply.UserId == currentUserId)
+                                                {
+                                                    <button class="btn btn-link btn-sm p-0 ms-2"
+                                                            style="font-size:0.7rem;text-decoration:none;"
+                                                            onclick="editComment(@reply.Id, `@Html.Raw(reply.Content.Replace("`", "\\`"))`)">
+                                                        Edit
+                                                    </button>
+                                                    <button class="btn btn-link btn-sm p-0 ms-2 text-danger"
+                                                            style="font-size:0.7rem;text-decoration:none;"
+                                                            onclick="deleteComment(@reply.Id)">
+                                                        Delete
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}

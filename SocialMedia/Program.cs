@@ -59,6 +59,8 @@ app.UseAuthorization();
 // SignalR Hubs
 app.MapHub<ChatHub>("/chatHub");
 app.MapHub<GroupChatHub>("/groupChatHub");
+// SignalR Hubs এর সাথে এটা add করো
+app.MapHub<PostHub>("/postHub");
 
 app.MapControllerRoute(
     name: "default",

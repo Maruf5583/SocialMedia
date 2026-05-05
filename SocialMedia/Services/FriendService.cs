@@ -33,7 +33,7 @@ namespace SocialMedia.Services
                 ((f.SenderId == userId1 && f.ReceiverId == userId2) ||
                  (f.SenderId == userId2 && f.ReceiverId == userId1)));
         }
-
+         
         public async Task<FriendRequest?> GetPendingRequestAsync(string senderId, string receiverId)
         {
             return await _db.FriendRequests.FirstOrDefaultAsync(f =>

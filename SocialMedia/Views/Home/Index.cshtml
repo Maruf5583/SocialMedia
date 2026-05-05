@@ -1,104 +1,519 @@
-﻿@model List<SocialMedia.ViewModels.UserCardViewModel>
+﻿@model SocialMedia.ViewModels.HomePageViewModel
 @{
     ViewData["Title"] = "Home";
 }
 
-<h4 class="fw-bold mb-4"><i class="bi bi-people"></i> People You May Know</h4>
+<div class="row g-3">
 
-@if (!Model.Any())
-{
-    <div class="text-center text-muted py-5">
-        <i class="bi bi-person-x" style="font-size:3rem"></i>
-        <p class="mt-2">No other users yet.</p>
-    </div>
-}
+    <!-- ══════════════════════════════════════
+         LEFT COLUMN — Friends List
+    ══════════════════════════════════════ -->
+    <div class="col-lg-3 d-none d-lg-block">
+        <div class="card shadow-sm mb-3" style="border-radius:12px;border:none;">
+            <div class="card-body p-3">
+                <h6 class="fw-bold text-muted mb-3">
+                    <i class="bi bi-person-circle"></i> My Profile
+                </h6>
+                <a asp-controller="Account" asp-action="Profile"
+                       class="d-flex align-items-center gap-2 text-decoration-none text-dark">
+                    @if (!string.IsNullOrEmpty(Model.CurrentUserAvatar))
+                    {
+                        <img src="@Model.CurrentUserAvatar" class="rounded-circle"
+                             style="width:42px;height:42px;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-primary text-white d-flex
+                            align-items-center justify-content-center fw-bold"
+                             style="width:42px;height:42px;">
+                            @Model.CurrentUserName[0]
+                        </div>
+                    }
+                    <span class="fw-semibold">@Model.CurrentUserName</span>
+                </a>
+            </div>
+        </div>
 
-<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-    @foreach (var user in Model)
-    {
-        <div class="col">
-            <div class="card h-100 shadow-sm text-center">
-                <div class="card-body">
+        <!-- Friends -->
+        <div class="card shadow-sm" style="border-radius:12px;border:none;">
+            <div class="card-body p-3">
+                <h6 class="fw-bold text-muted mb-3">
+                    <i class="bi bi-people-fill"></i>
+                    Friends
+                    <span class="badge bg-secondary ms-1">@Model.Friends.Count</span>
+                </h6>
+
+                @if (!Model.Friends.Any())
+                {
+                    <p class="text-muted small">No friends yet.</p>
+                }
+
+                @foreach (var friend in Model.Friends.Take(8))
+                {
                     <a asp-controller="Account" asp-action="Profile"
-                           asp-route-id="@user.Id" class="text-decoration-none">
-                        @if (!string.IsNullOrEmpty(user.ProfilePicture))
+                           asp-route-id="@friend.Id"
+                           class="d-flex align-items-center gap-2 text-decoration-none
+                        text-dark mb-2 p-1 rounded hover-bg">
+                        @if (!string.IsNullOrEmpty(friend.ProfilePicture))
                         {
-                            <img src="@user.ProfilePicture"
-                                 class="rounded-circle mb-3"
-                                 style="width:80px;height:80px;object-fit:cover;" />
+                            <img src="@friend.ProfilePicture" class="rounded-circle"
+                                 style="width:36px;height:36px;object-fit:cover;" />
                         }
                         else
                         {
                             <div class="rounded-circle bg-primary text-white d-flex
-                                align-items-center justify-content-center mx-auto mb-3"
-                                 style="width:80px;height:80px;font-size:2rem;">
-                                @user.FullName[0]
+                                align-items-center justify-content-center"
+                                 style="width:36px;height:36px;font-size:0.9rem;">
+                                @friend.FullName[0]
                             </div>
                         }
-                        <h6 class="fw-bold text-dark">@user.FullName</h6>
+                        <span class="small fw-semibold">@friend.FullName</span>
                     </a>
-                    <p class="text-muted small mb-3">
-                        @(string.IsNullOrEmpty(user.Bio) ? "No bio yet" :
-                          (user.Bio.Length > 50 ? user.Bio[..50] + "..." : user.Bio))
-                    </p>
+                }
 
-                    @* Friend Action Buttons *@
-                    @if (user.IsFriend)
+                @if (Model.Friends.Count > 8)
+                {
+                    <a asp-controller="Friend" asp-action="Requests"
+                           class="btn btn-outline-primary btn-sm w-100 mt-2">
+                        See all friends
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         MIDDLE COLUMN — Feed
+    ══════════════════════════════════════ -->
+    <div class="col-lg-6 col-md-8">
+
+        <!-- Create Post Box -->
+        <div class="card shadow-sm mb-3" style="border-radius:12px;border:none;">
+            <div class="card-body p-3">
+                <div class="d-flex gap-2 align-items-center mb-3">
+                    @if (!string.IsNullOrEmpty(Model.CurrentUserAvatar))
                     {
-                        <div class="d-flex gap-2 justify-content-center">
-                            <a asp-controller="Chat" asp-action="Open"
-                                   asp-route-userId="@user.Id"
-                                   class="btn btn-success btn-sm">
-                                <i class="bi bi-chat-fill"></i> Message
-                            </a>
-                            <form asp-controller="Friend" asp-action="Unfriend" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="friendId" value="@user.Id" />
-                                <button class="btn btn-outline-danger btn-sm">Unfriend</button>
-                            </form>
-                        </div>
-                    }
-                    else if (user.HasPendingRequestSent)
-                    {
-                        <form asp-controller="Friend" asp-action="CancelRequest" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="requestId" value="@user.FriendRequestId" />
-                            <button class="btn btn-secondary btn-sm w-100">
-                                <i class="bi bi-x-circle"></i> Cancel Request
-                            </button>
-                        </form>
-                    }
-                    else if (user.HasPendingRequestReceived)
-                    {
-                        <div class="d-flex gap-2 justify-content-center">
-                            <form asp-controller="Friend" asp-action="AcceptRequest" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="requestId" value="@user.FriendRequestId" />
-                                <button class="btn btn-primary btn-sm">
-                                    <i class="bi bi-check-circle"></i> Accept
-                                </button>
-                            </form>
-                            <form asp-controller="Friend" asp-action="RejectRequest" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="requestId" value="@user.FriendRequestId" />
-                                <button class="btn btn-outline-danger btn-sm">
-                                    <i class="bi bi-x"></i> Reject
-                                </button>
-                            </form>
-                        </div>
+                        <img src="@Model.CurrentUserAvatar" class="rounded-circle"
+                             style="width:42px;height:42px;object-fit:cover;" />
                     }
                     else
                     {
-                        <form asp-controller="Friend" asp-action="SendRequest" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="receiverId" value="@user.Id" />
-                            <button class="btn btn-primary btn-sm w-100">
-                                <i class="bi bi-person-plus"></i> Add Friend
-                            </button>
-                        </form>
+                        <div class="rounded-circle bg-primary text-white d-flex
+                            align-items-center justify-content-center fw-bold"
+                             style="width:42px;height:42px;">
+                            @Model.CurrentUserName[0]
+                        </div>
                     }
+                    <button class="btn btn-light w-100 text-start text-muted rounded-pill"
+                            onclick="toggleCreatePost()">
+                        What's on your mind, @Model.CurrentUserName.Split(' ')[0]?
+                    </button>
+                </div>
+
+                <!-- Create Post Form (hidden by default) -->
+                <div id="createPostForm" class="d-none">
+                    <form asp-controller="Post" asp-action="Create"
+                          method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <textarea name="Content" id="postContent"
+                                  class="form-control border-0 bg-light mb-2"
+                                  rows="3"
+                                  placeholder="What's on your mind?"
+                                  style="resize:none;border-radius:10px;"></textarea>
+
+                        <!-- Image Preview -->
+                        <div id="imagePreviewBox" class="d-none mb-2">
+                            <div class="position-relative d-inline-block">
+                                <img id="imagePreview" src="#" class="img-fluid rounded"
+                                     style="max-height:250px;" />
+                                <button type="button"
+                                        class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                                        onclick="removeImagePreview()">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <input type="file" name="Image" id="postImageInput"
+                               accept="image/*" class="d-none"
+                               onchange="previewImage(this)" />
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex gap-2">
+                                <button type="button"
+                                        class="btn btn-light btn-sm text-success"
+                                        onclick="document.getElementById('postImageInput').click()">
+                                    <i class="bi bi-image-fill"></i> Photo
+                                </button>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        onclick="toggleCreatePost()">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-send"></i> Post
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-    }
+
+        <!-- Posts Feed -->
+        <div id="postsFeed">
+            @if (!Model.Posts.Any())
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-newspaper" style="font-size:3rem"></i>
+                    <p class="mt-3">No posts yet. Be the first to post!</p>
+                </div>
+            }
+
+            @foreach (var post in Model.Posts)
+            {
+                @await Html.PartialAsync("_PostCard", post)
+            }
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         RIGHT COLUMN — Friend Requests + People
+    ══════════════════════════════════════ -->
+    <div class="col-lg-3 d-none d-lg-block">
+
+        <!-- Friend Requests -->
+        @if (Model.PendingRequests.Any())
+        {
+            <div class="card shadow-sm mb-3" style="border-radius:12px;border:none;">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold text-muted mb-3">
+                        <i class="bi bi-person-plus-fill"></i> Friend Requests
+                        <span class="badge bg-danger ms-1">
+                            @Model.PendingRequests.Count
+                        </span>
+                    </h6>
+
+                    @foreach (var req in Model.PendingRequests)
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            @if (!string.IsNullOrEmpty(req.Sender.ProfilePicture))
+                            {
+                                <img src="@req.Sender.ProfilePicture" class="rounded-circle"
+                                     style="width:42px;height:42px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-primary text-white d-flex
+                                    align-items-center justify-content-center"
+                                     style="width:42px;height:42px;">
+                                    @req.Sender.FullName[0]
+                                </div>
+                            }
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold small">@req.Sender.FullName</div>
+                                <div class="d-flex gap-1 mt-1">
+                                    <form asp-controller="Friend"
+                                          asp-action="AcceptRequest" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="requestId"
+                                               value="@req.Id" />
+                                        <button class="btn btn-primary btn-sm">
+                                            Confirm
+                                        </button>
+                                    </form>
+                                    <form asp-controller="Friend"
+                                          asp-action="RejectRequest" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="requestId"
+                                               value="@req.Id" />
+                                        <button class="btn btn-light btn-sm">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- People You May Know -->
+        @if (Model.PeopleYouMayKnow.Any())
+        {
+            <div class="card shadow-sm" style="border-radius:12px;border:none;">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold text-muted mb-3">
+                        <i class="bi bi-person-check"></i> People You May Know
+                    </h6>
+
+                    @foreach (var person in Model.PeopleYouMayKnow)
+                    {
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            @if (!string.IsNullOrEmpty(person.ProfilePicture))
+                            {
+                                <img src="@person.ProfilePicture" class="rounded-circle"
+                                     style="width:42px;height:42px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-secondary text-white d-flex
+                                    align-items-center justify-content-center"
+                                     style="width:42px;height:42px;">
+                                    @person.FullName[0]
+                                </div>
+                            }
+                            <div class="flex-grow-1">
+                                <a asp-controller="Account" asp-action="Profile"
+                                       asp-route-id="@person.Id"
+                                       class="fw-semibold small text-dark text-decoration-none">
+                                    @person.FullName
+                                </a>
+                                @if (person.HasPendingRequestSent)
+                                {
+                                    <form asp-controller="Friend"
+                                          asp-action="CancelRequest" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="requestId"
+                                               value="@person.FriendRequestId" />
+                                        <button class="btn btn-light btn-sm w-100 mt-1">
+                                            Cancel Request
+                                        </button>
+                                    </form>
+                                }
+                                else if (person.HasPendingRequestReceived)
+                                {
+                                    <form asp-controller="Friend"
+                                          asp-action="AcceptRequest" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="requestId"
+                                               value="@person.FriendRequestId" />
+                                        <button class="btn btn-primary btn-sm w-100 mt-1">
+                                            Accept
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-controller="Friend"
+                                          asp-action="SendRequest" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="receiverId"
+                                               value="@person.Id" />
+                                        <button class="btn btn-primary btn-sm w-100 mt-1">
+                                            <i class="bi bi-person-plus"></i> Add Friend
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+<!-- ── Edit Post Modal ───────────────────────────────────── -->
+<div class="modal fade" id="editPostModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:12px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Edit Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-controller="Post" asp-action="Edit"
+                  method="post" enctype="multipart/form-data" id="editPostForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editPostId" />
+                <input type="hidden" name="ExistingImage" id="editExistingImage" />
+
+                <div class="modal-body">
+                    <textarea name="Content" id="editPostContent"
+                              class="form-control bg-light border-0 mb-3"
+                              rows="4" style="resize:none;border-radius:10px;"></textarea>
+
+                    <!-- Existing Image -->
+                    <div id="editImageContainer" class="mb-2">
+                        <div class="position-relative d-inline-block" id="existingImageBox">
+                            <img id="editExistingPreview" src="#"
+                                 class="img-fluid rounded" style="max-height:200px;" />
+                            <div class="form-check mt-1">
+                                <input type="checkbox" name="RemoveImage"
+                                       id="removeImageCheck"
+                                       class="form-check-input"
+                                       value="true" />
+                                <label for="removeImageCheck"
+                                       class="form-check-label text-danger small">
+                                    Remove image
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label class="btn btn-light btn-sm">
+                        <i class="bi bi-image"></i> Change Photo
+                        <input type="file" name="NewImage" accept="image/*" class="d-none" />
+                    </label>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── Share Post Modal ──────────────────────────────────── -->
+<div class="modal fade" id="sharePostModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:12px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Share Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-controller="Post" asp-action="Share" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="originalPostId" id="sharePostId" />
+                <div class="modal-body">
+                    <textarea name="content" class="form-control border-0 bg-light mb-3"
+                              rows="3" style="resize:none;border-radius:10px;"
+                              placeholder="Say something about this..."></textarea>
+                    <div class="border rounded p-2 bg-light" id="sharePreviewBox">
+                        <!-- Original post preview -->
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-share"></i> Share Now
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ─── Create Post Toggle ───────────────────────────────────────
+        function toggleCreatePost() {
+            const form = document.getElementById("createPostForm");
+            form.classList.toggle("d-none");
+            if (!form.classList.contains("d-none"))
+                document.getElementById("postContent").focus();
+        }
+
+        // ─── Image Preview (Create) ───────────────────────────────────
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById("imagePreview").src = e.target.result;
+                    document.getElementById("imagePreviewBox").classList.remove("d-none");
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeImagePreview() {
+            document.getElementById("postImageInput").value = "";
+            document.getElementById("imagePreviewBox").classList.add("d-none");
+        }
+
+        // ─── Edit Post Modal ──────────────────────────────────────────
+        function openEditModal(id, content, imagePath) {
+            document.getElementById("editPostId").value      = id;
+            document.getElementById("editPostContent").value = content || "";
+            document.getElementById("editExistingImage").value = imagePath || "";
+
+            const imgBox = document.getElementById("existingImageBox");
+            if (imagePath) {
+                document.getElementById("editExistingPreview").src = imagePath;
+                imgBox.classList.remove("d-none");
+            } else {
+                imgBox.classList.add("d-none");
+            }
+
+            new bootstrap.Modal(document.getElementById("editPostModal")).show();
+        }
+
+        // ─── Share Post Modal ─────────────────────────────────────────
+        function openShareModal(postId, authorName, content, imagePath) {
+            document.getElementById("sharePostId").value = postId;
+
+            let preview = `<div class="small">
+                <strong>${authorName}</strong>
+                <p class="mb-1 text-muted">${content || ""}</p>`;
+            if (imagePath) {
+                preview += `<img src="${imagePath}"
+                                 class="img-fluid rounded" style="max-height:120px;" />`;
+            }
+            preview += `</div>`;
+
+            document.getElementById("sharePreviewBox").innerHTML = preview;
+            new bootstrap.Modal(document.getElementById("sharePostModal")).show();
+        }
+
+        // ─── SignalR — PostHub ────────────────────────────────────────
+        const postConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/postHub")
+            .withAutomaticReconnect()
+            .build();
+
+        postConnection.on("ReactionUpdated", (data) => {
+            // Total count update
+            const totalEl = document.getElementById(`reaction-total-${data.postId}`);
+            if (totalEl) totalEl.textContent = data.totalCount || "";
+
+            // Emoji summary update
+            const summaryEl = document.getElementById(`reaction-summary-${data.postId}`);
+            if (summaryEl) {
+                const emojiMap = {
+                    Like:"👍", Love:"❤️", Haha:"😂", Wow:"😮", Sad:"😢", Angry:"😡"
+                };
+                let html = "";
+                if (data.counts) {
+                    data.counts.forEach(c => {
+                        html += `<span>${emojiMap[c.type] || ""}</span>`;
+                    });
+                }
+                summaryEl.innerHTML = html;
+            }
+
+            // My reaction button highlight
+            const currentUserId = "@Model.CurrentUserId";
+            if (data.userId === currentUserId) {
+                // Remove all active states for this post
+                document.querySelectorAll(`.reaction-btn-${data.postId}`)
+                    .forEach(btn => btn.classList.remove("active-reaction"));
+
+                // Set active
+                if (data.myReaction) {
+                    const activeBtn = document.getElementById(
+                        `react-${data.postId}-${data.myReaction}`);
+                    if (activeBtn) activeBtn.classList.add("active-reaction");
+                }
+            }
+        });
+
+        postConnection.start();
+
+        // ─── React ───────────────────────────────────────────────────
+        function reactToPost(postId, reactionType) {
+            postConnection.invoke("React", postId, reactionType);
+        }
+    </script>
+}

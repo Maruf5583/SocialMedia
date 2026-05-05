@@ -101,33 +101,114 @@ namespace SocialMedia.Controllers
         // ─── Profile ─────────────────────────────────────────────
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> Profile(string? id = null)
+        
+        public async Task<IActionResult> Profile(string? id)
         {
             var currentUserId = _userManager.GetUserId(User)!;
-            var targetId = id ?? currentUserId;
+            var userId = id ?? currentUserId;
 
-            var targetUser = await _db.Users.FirstOrDefaultAsync(u => u.Id == targetId);
-            if (targetUser == null) return NotFound();
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return NotFound();
 
-            var isOwn = targetId == currentUserId;
-            var friends = await _friendService.GetFriendsAsync(targetId);
-            var pendingRequest = await _friendService.GetPendingRequestAsync(currentUserId, targetId);
+            // Get user's posts
+            var posts = await _db.Posts
+                .Include(p => p.User)
+                .Include(p => p.Reactions)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                .Include(p => p.OriginalPost)
+                    .ThenInclude(op => op!.User)
+                .Where(p => p.UserId == userId)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            // Map posts to ViewModel
+            var postVms = posts.Select(p => MapToPostViewModel(p, currentUserId, user.ProfilePicture, user.FullName)).ToList();
+
+            // Check friend status
+            var isFriend = await _db.FriendRequests
+                .AnyAsync(f => f.Status == FriendRequestStatus.Accepted &&
+                               ((f.SenderId == currentUserId && f.ReceiverId == userId) ||
+                                (f.SenderId == userId && f.ReceiverId == currentUserId)));
+
+            var pendingRequest = await _db.FriendRequests
+                .FirstOrDefaultAsync(f => f.Status == FriendRequestStatus.Pending &&
+                                          ((f.SenderId == currentUserId && f.ReceiverId == userId) ||
+                                           (f.SenderId == userId && f.ReceiverId == currentUserId)));
+
+            var friendsCount = await _db.FriendRequests
+                .CountAsync(f => f.Status == FriendRequestStatus.Accepted &&
+                                (f.SenderId == userId || f.ReceiverId == userId));
 
             var vm = new ProfileViewModel
             {
-                Id = targetUser.Id,
-                FullName = targetUser.FullName,
-                Bio = targetUser.Bio,
-                ProfilePicture = targetUser.ProfilePicture,
-                IsOwnProfile = isOwn,
-                FriendsCount = friends.Count,
-                IsFriend = await _friendService.AreFriendsAsync(currentUserId, targetId),
-                HasPendingRequest = pendingRequest != null && pendingRequest.SenderId == currentUserId,
-                HasReceivedRequest = pendingRequest != null && pendingRequest.SenderId == targetId,
-                FriendRequestId = pendingRequest?.Id ?? 0
+                Id = user.Id,
+                FullName = user.FullName,
+                Bio = user.Bio,
+                ProfilePicture = user.ProfilePicture,
+                IsOwnProfile = currentUserId == userId,
+                IsFriend = isFriend,
+                HasPendingRequest = pendingRequest?.SenderId == currentUserId,
+                HasReceivedRequest = pendingRequest?.ReceiverId == currentUserId,
+                FriendRequestId = pendingRequest?.Id,
+                FriendsCount = friendsCount,
+                PostsCount = posts.Count,
+                Posts = postVms,  // ← Posts যোগ করুন
+                CurrentUserId = currentUserId
             };
 
             return View(vm);
+        }
+
+        // Helper method to map Post to PostViewModel
+        private PostViewModel MapToPostViewModel(Post p, string currentUserId, string? currentUserAvatar, string? currentUserName)
+        {
+            var reactionCounts = p.Reactions
+                .GroupBy(r => r.ReactionType.ToString())
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var myReaction = p.Reactions
+                .FirstOrDefault(r => r.UserId == currentUserId)?.ReactionType;
+
+            PostViewModel? originalVm = null;
+            if (p.OriginalPost != null)
+            {
+                originalVm = new PostViewModel
+                {
+                    Id = p.OriginalPost.Id,
+                    UserId = p.OriginalPost.UserId,
+                    UserName = p.OriginalPost.User?.FullName ?? "Unknown",
+                    UserAvatar = p.OriginalPost.User?.ProfilePicture,
+                    Content = p.OriginalPost.Content,
+                    ImagePath = p.OriginalPost.ImagePath,
+                    IsEdited = p.OriginalPost.IsEdited,
+                    CreatedAt = p.OriginalPost.CreatedAt,
+                    TotalReactions = p.OriginalPost.Reactions.Count
+                };
+            }
+
+            return new PostViewModel
+            {
+                Id = p.Id,
+                UserId = p.UserId,
+                UserName = p.User?.FullName ?? "Unknown",
+                UserAvatar = p.User?.ProfilePicture,
+                Content = p.Content,
+                ImagePath = p.ImagePath,
+                IsEdited = p.IsEdited,
+                CreatedAt = p.CreatedAt,
+                TotalReactions = p.Reactions.Count,
+                ReactionCounts = reactionCounts,
+                MyReaction = myReaction,
+                ShareCount = p.Shares.Count,
+                IsShared = p.OriginalPostId.HasValue,
+                OriginalPost = originalVm,
+                IsOwnPost = p.UserId == currentUserId,
+                CurrentUserId = currentUserId,
+                CurrentUserAvatar = currentUserAvatar,
+                CurrentUserName = currentUserName,
+                CommentCount = p.Comments?.Count ?? 0
+            };
         }
 
         // ─── Edit Profile ────────────────────────────────────────
