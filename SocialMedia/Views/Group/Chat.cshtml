@@ -33,6 +33,22 @@
                     <small class="opacity-75">
                         @Model.Group.Members.Count members
                     </small>
+                    <!-- Group chat header এ Details button এর আগে -->
+                    <div class="d-flex gap-2 me-2">
+                        <!-- Group Audio Call -->
+                        <button class="btn btn-outline-light btn-sm"
+                                onclick="CallManager.startGroupCall(@Model.Group.Id, false)"
+                                title="Group Audio Call">
+                            <i class="bi bi-telephone-fill"></i>
+                        </button>
+
+                        <!-- Group Video Call -->
+                        <button class="btn btn-outline-light btn-sm"
+                                onclick="CallManager.startGroupCall(@Model.Group.Id, true)"
+                                title="Group Video Call">
+                            <i class="bi bi-camera-video-fill"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <a asp-action="Details" asp-route-id="@Model.Group.Id"

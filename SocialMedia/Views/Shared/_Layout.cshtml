@@ -9,7 +9,7 @@
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
-    <script src="~/js/reactions.js"></script>
+  
 </head>
 <body>
 
@@ -48,6 +48,17 @@
                         </li>
                     </ul>
                     <ul class="navbar-nav ms-auto align-items-center">
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-warning fw-bold"
+                                       asp-area="Admin"
+                                       asp-controller="Dashboard"
+                                       asp-action="Index">
+                                    <i class="bi bi-shield-fill-check"></i> Admin
+                                </a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Account" asp-action="Profile">
                                 <i class="bi bi-person-circle"></i> My Profile
@@ -87,8 +98,44 @@
         </div>
     </main>
 
+   
+    @if (User.Identity!.IsAuthenticated)
+    {
+        @await Html.PartialAsync("_CallModals")
+    }
+
+   
+
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+   
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+    
+    <script src="~/js/reactions.js"></script>
+    <script src="~/js/call.js"></script>
+
+    
+    @if (User.Identity!.IsAuthenticated)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+            const userId = "@User.FindFirst(
+                            System.Security.Claims.ClaimTypes.NameIdentifier)?.Value";
+            if (userId) {
+            try {
+            await CallManager.init(userId);
+            } catch(e) {
+            console.error("CallManager init failed:", e);
+            }
+            }
+            });
+        </script>
+    }
+
+    
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

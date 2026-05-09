@@ -6,35 +6,48 @@
         <div class="card shadow-sm" style="height:85vh; display:flex; flex-direction:column;">
 
             <!-- Chat Header -->
-            <div class="card-header bg-primary text-white d-flex align-items-center gap-3">
-                <a asp-controller="Chat" asp-action="Index"
-                   class="text-white text-decoration-none">
-                    <i class="bi bi-arrow-left fs-5"></i>
-                </a>
+<div class="card-header bg-primary text-white d-flex align-items-center gap-3">
+    <a asp-controller="Chat" asp-action="Index"
+       class="text-white text-decoration-none">
+        <i class="bi bi-arrow-left fs-5"></i>
+    </a>
 
-                @if (!string.IsNullOrEmpty(Model.FriendAvatar))
-                {
-                    <img src="@Model.FriendAvatar"
-                         class="rounded-circle"
-                         style="width:40px;height:40px;object-fit:cover;" />
-                }
-                else
-                {
-                    <div class="rounded-circle bg-white text-primary d-flex
-                                align-items-center justify-content-center fw-bold"
-                         style="width:40px;height:40px;">
-                        @Model.FriendName[0]
-                    </div>
-                }
+    @if (!string.IsNullOrEmpty(Model.FriendAvatar))
+    {
+        <img src="@Model.FriendAvatar"
+             class="rounded-circle"
+             style="width:40px;height:40px;object-fit:cover;" />
+    }
+    else
+    {
+        <div class="rounded-circle bg-white text-primary d-flex
+                    align-items-center justify-content-center fw-bold"
+             style="width:40px;height:40px;">
+            @Model.FriendName[0]
+        </div>
+    }
 
-                <div>
-                    <div class="fw-bold">@Model.FriendName</div>
-                    <small id="statusText" class="opacity-75">
-                        <span id="onlineStatus"></span>
-                    </small>
-                </div>
-            </div>
+    <div class="flex-grow-1">     
+        <div class="fw-bold">@Model.FriendName</div>
+        <small id="statusText" class="opacity-75">
+            <span id="onlineStatus"></span>
+        </small>
+    </div>
 
+    
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-light btn-sm"
+                onclick="CallManager.startPrivateCall('@Model.FriendId', false)"
+                title="Audio Call">
+            <i class="bi bi-telephone-fill"></i>
+        </button>
+        <button class="btn btn-outline-light btn-sm"
+                onclick="CallManager.startPrivateCall('@Model.FriendId', true)"
+                title="Video Call">
+            <i class="bi bi-camera-video-fill"></i>
+        </button>
+    </div>
+</div>
             <!-- Messages Area -->
             <div class="card-body overflow-auto p-3 flex-grow-1" id="messagesArea">
                 @foreach (var msg in Model.Messages)

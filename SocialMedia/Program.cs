@@ -38,6 +38,8 @@ builder.Services.AddScoped<FileUploadService>();
 
 // SignalR
 builder.Services.AddSignalR();
+// Services এর সাথে add করো
+builder.Services.AddSingleton<OnlineUserService>();
 
 // MVC
 builder.Services.AddControllersWithViews();
@@ -61,6 +63,7 @@ app.MapHub<ChatHub>("/chatHub");
 app.MapHub<GroupChatHub>("/groupChatHub");
 // SignalR Hubs এর সাথে এটা add করো
 app.MapHub<PostHub>("/postHub");
+app.MapHub<CallHub>("/callHub");
 
 app.MapControllerRoute(
     name: "default",
