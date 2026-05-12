@@ -39,7 +39,7 @@ namespace SocialMedia.Hubs
             var userId = _userManager.GetUserId(Context.User!)!;
             _onlineUsers.Remove(userId);
 
-            // সবাইকে জানাও এই user offline হয়েছে
+            
             await Clients.Others.SendAsync("UserOffline", userId);
             await base.OnDisconnectedAsync(exception);
         }
